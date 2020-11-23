@@ -17,13 +17,18 @@ public class MarioMovement : MonoBehaviour
     Vector3 velocity;
     bool isGrounded;
     bool isAlive;
-
     public Transform cam;
+
+    //spin variables
+    bool isSpin;
+    public GameObject spin = null;
+    public float SpinDelay = 2f;
 
     // Start is called before the first frame update
     void Start()
     {
         isAlive = true;
+        isSpin = false;
     }
 
     // Update is called once per frame
@@ -53,14 +58,44 @@ public class MarioMovement : MonoBehaviour
                 mario.Move(moveDir.normalized * speed * Time.deltaTime);
             }
             
-
-            if (Input.GetButtonDown("Jump") && isGrounded)
+            //when we jump
+            if (Input.GetButtonDown("Jump") && isGrounded && !isSpin)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            }
+
+            //when we spin
+            if (Input.GetButtonDown("Fire1") && isSpin == false)
+            {
+                SpinAttack();
             }
             velocity.y += gravity * Time.deltaTime;
 
             mario.Move(velocity * Time.deltaTime);
         }
+    }
+
+    void SpinAttack()
+    {
+        Debug.Log("Spin");
+        isSpin = true;
+        spin.SetActive(true);
+
+        //check to see whether we are in the air or not
+        //if we are in the air, we get a bonus jump from the spin attack
+        if (isGrounded == false)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+
+        //we need a delay so that we can't just keep spinning
+        Invoke("ResetSpinAttack", SpinDelay);
+    }
+
+    void ResetSpinAttack()
+    {
+        Debug.Log("Done Spinning");
+        spin.SetActive(false);
+        isSpin = false;
     }
 }
