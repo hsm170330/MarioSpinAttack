@@ -22,13 +22,22 @@ public class MarioMovement : MonoBehaviour
     //spin variables
     bool isSpin;
     public GameObject spin = null;
-    public float SpinDelay = 2f;
+    public float SpinDelay = 1f;
+    [SerializeField] ParticleSystem spinP = null;
+
+    //Audio
+    [SerializeField] AudioClip SpinAudio = null;
+    [SerializeField] AudioClip JumpAudio = null;
+
+    //Animations
+    Animator animator;
 
     // Start is called before the first frame update
     void Start()
     {
         isAlive = true;
         isSpin = false;
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -56,12 +65,29 @@ public class MarioMovement : MonoBehaviour
 
                 Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
                 mario.Move(moveDir.normalized * speed * Time.deltaTime);
+
+                //animation
+                animator.SetBool("IsWalking", true);
             }
+            else
+            {
+                animator.SetBool("IsWalking", false);
+            }
+            //Debug.Log(horizontal);
+
+            
             
             //when we jump
             if (Input.GetButtonDown("Jump") && isGrounded && !isSpin)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+                //audio
+                AudioManager.PlayClip2D(JumpAudio, 1);
+
+                //animation
+                animator.SetBool("IsJumping", true);
+                Invoke("StopJumpAnim", 1.2f);
             }
 
             //when we spin
@@ -88,14 +114,41 @@ public class MarioMovement : MonoBehaviour
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        //we need a delay so that we can't just keep spinning
+        //play audio
+        AudioManager.PlayClip2D(SpinAudio, 1);
+
+        //animation
+        animator.SetBool("IsSpining", true);
+        Invoke("StopSpinAnim", 1f);
+        spinP.Play();
+
+        //we need two delays, one to disable the spin animation, and one to delay when we can spin again
         Invoke("ResetSpinAttack", SpinDelay);
+        Invoke("SpinAgain", 2f);
     }
 
+
+    // reset methods
     void ResetSpinAttack()
     {
         Debug.Log("Done Spinning");
         spin.SetActive(false);
+        
+    }
+
+    void StopJumpAnim()
+    {
+        animator.SetBool("IsJumping", false);
+    }
+
+    void StopSpinAnim()
+    {
+        animator.SetBool("IsSpining", false);
+    }
+
+    void SpinAgain()
+    {
+        Debug.Log("We can spin again now");
         isSpin = false;
     }
 }
